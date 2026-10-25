@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # 1. Set up the web page titles
-st.title("💃 LQ Dance Closet")
+st.title("La Quinta Dance Closet")
 st.write("La Quinta High School Performing Arts Wardrobe Portal")
 
 # 2. Create an empty list to hold our costume data if it doesn't exist yet
