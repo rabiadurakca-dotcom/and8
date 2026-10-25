@@ -24,8 +24,6 @@ if uploaded_file is not None:
         if "PRETEND" in uploaded_file.name or "receipt" in uploaded_file.name.lower():
             
             # --- AUTOMATIC RECIPIENT DATA EXTRACTION ---
-            # Item 1 Breakdown: Lovesong Lyrical Dress (1 S, 2 M, 1 L)
-            # Item 2 Breakdown: Mesh Sleeve Low Back Leotard (1 XS, 3 S, 5 M, 1 L)
             items_to_add = [
                 {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "S", "Qty": 1, "Img": "https://weissmans.com"},
                 {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "M", "Qty": 2, "Img": "https://weissmans.com"},
@@ -50,7 +48,7 @@ if uploaded_file is not None:
                 if found == False:
                     new_row = {
                         "Costume Name": incoming["Name"], 
-                        "Costume Image": incoming["Img"], # Save raw web link string token directly
+                        "Costume Image": incoming["Img"],
                         "Vendor": incoming["Vendor"], 
                         "Source File": uploaded_file.name,
                         "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
@@ -91,12 +89,11 @@ if st.button("Add to Closet Table", key="manual_submit_btn"):
         
         # If the costume doesn't exist yet, make a brand new clean row
         if found == False:
-            # Fallback placeholder image links if manually typed item doesn't map to receipt assets
             placeholder_url = "https://weissmans.com"
             
             new_manual_row = {
                 "Costume Name": manual_name, 
-                "Costume Image": placeholder_url, 
+                "Costume Image": placeholder_url, # FIX: Matches the column order name exactly!
                 "Vendor": manual_vendor, 
                 "Source File": "Manual Entry", 
                 "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
@@ -116,7 +113,7 @@ st.markdown("### Size Table Chart")
 if len(st.session_state.closet_list) == 0:
     st.info("The closet matrix is currently empty. Upload a file or add items manually.")
 else:
-    # Convert list into standard grid framework
+    # Convert list into data frame
     display_df = pd.DataFrame(st.session_state.closet_list)
     display_df = display_df.set_index("Costume Name")
     
@@ -124,7 +121,7 @@ else:
     column_order = ["Costume Image", "Vendor", "Source File", "XS", "S", "M", "L", "XL"]
     display_df = display_df[column_order]
     
-    # Render table utilizing Streamlit's official ImageColumn native rendering engine config feature
+    # Render table utilizing Streamlit's official ImageColumn native rendering engine
     st.dataframe(
         display_df,
         column_config={
