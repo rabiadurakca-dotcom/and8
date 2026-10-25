@@ -25,22 +25,22 @@ if uploaded_file is not None:
             
             # --- AUTOMATIC RECIPIENT DATA EXTRACTION ---
             # Item 1 Breakdown: Lovesong Lyrical Dress (1 S, 2 M, 1 L)
+            # Item 2 Breakdown: Mesh Sleeve Low Back Leotard (1 XS, 3 S, 5 M, 1 L)
             items_to_add = [
-                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "S", "Qty": 1},
-                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "M", "Qty": 2},
-                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "L", "Qty": 1},
-                # Item 2 Breakdown: Mesh Sleeve Low Back Leotard (1 XS, 3 S, 5 M, 1 L)
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "XS", "Qty": 1},
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "S", "Qty": 3},
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "M", "Qty": 5},
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "L", "Qty": 1}
+                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "S", "Qty": 1, "ImgUrl": "https://weissmans.com"},
+                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "M", "Qty": 2, "ImgUrl": "https://weissmans.com"},
+                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "L", "Qty": 1, "ImgUrl": "https://weissmans.com"},
+                
+                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "XS", "Qty": 1, "ImgUrl": "https://weissmans.com"},
+                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "S", "Qty": 3, "ImgUrl": "https://weissmans.com"},
+                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "M", "Qty": 5, "ImgUrl": "https://weissmans.com"},
+                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "L", "Qty": 1, "ImgUrl": "https://weissmans.com"}
             ]
             
             # Loop through each extracted receipt row and merge into database
             for incoming in items_to_add:
                 found = False
                 for item in st.session_state.closet_list:
-                    # SMART FIX: Check if one name is inside the other so "Lovesong" and "Lovesong Lyrical Dress" merge!
                     name1 = item["Costume Name"].lower()
                     name2 = incoming["Name"].lower()
                     if (name1 in name2) or (name2 in name1):
@@ -48,8 +48,11 @@ if uploaded_file is not None:
                         found = True
                         
                 if found == False:
+                    # Formulate HTML image tag layout string text block cleanly
+                    img_html = f'<img src="{incoming["ImgUrl"]}" width="50" style="border-radius:4px;">'
+                    
                     new_row = {
-                        "Costume Name": incoming["Name"], "Vendor": incoming["Vendor"], "Source File": uploaded_file.name,
+                        "Costume Name": incoming["Name"], "Image": img_html, "Vendor": incoming["Vendor"], "Source File": uploaded_file.name,
                         "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
                     }
                     new_row[incoming["Size"]] = incoming["Qty"]
@@ -82,17 +85,17 @@ if st.button("Add to Closet Table", key="manual_submit_btn"):
             name2 = manual_name.lower()
             if (name1 in name2) or (name2 in name1):
                 item[manual_size] += int(manual_qty)
-                # Keep the longer name to look more complete in the table
                 if len(manual_name) > len(item["Costume Name"]):
                     item["Costume Name"] = manual_name
                 found = True
         
         # If the costume doesn't exist yet, make a brand new clean row
         if found == False:
+            # Use a clean sparkle emoji placeholder for manual items without a receipt url
+            sparkle_html = '<span style="font-size:24px;">✨</span>'
+            
             new_manual_row = {
-                "Costume Name": manual_name, 
-                "Vendor": manual_vendor,
-                "Source File": "Manual Entry", 
+                "Costume Name": manual_name, "Image": sparkle_html, "Vendor": manual_vendor, "Source File": "Manual Entry", 
                 "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
             }
             new_manual_row[manual_size] = int(manual_qty)
@@ -113,7 +116,9 @@ else:
     display_df = pd.DataFrame(st.session_state.closet_list)
     display_df = display_df.set_index("Costume Name")
     
-    column_order = ["Vendor", "Source File", "XS", "S", "M", "L", "XL"]
+    # Re-order layout columns cleanly including our new photo preview column block vector
+    column_order = ["Image", "Vendor", "Source File", "XS", "S", "M", "L", "XL"]
     display_df = display_df[column_order]
     
-    st.table(display_df)
+    # Render the table data using custom HTML parsing so image thumbnails load inside rows
+    st.write(display_df.to_html(escape=False), unsafe_allow_html=True)
