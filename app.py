@@ -1,25 +1,26 @@
 import streamlit as st
 import pandas as pd
 
-# 1. Set up the web page titles
+# web page titles
 st.title("La Quinta Dance Closet")
 st.write("La Quinta High School Performing Arts Wardrobe Portal")
 
-# 2. Create an empty list to hold our costume data if it doesn't exist yet
+# empty list to hold costume data
 if 'closet_list' not in st.session_state:
     st.session_state.closet_list = []
-
-# --- SECTION 1: UPLOAD ANY IMAGE ---
+    
 st.markdown("### Automated Scan")
 
-# Create a file uploader box
 uploaded_file = st.file_uploader("Upload a receipt photo or pdf", type=["pdf", "png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     st.success("File uploaded successfully!")
     
-    # Show the actual image that was uploaded right on the screen
-    st.image(uploaded_file, caption="Uploaded Document Preview", width=200)
+    # SAFETY CHECK: Only show the image preview if the file is NOT a PDF document
+    if uploaded_file.name.endswith(".pdf") == False:
+        st.image(uploaded_file, caption="Uploaded Document Preview", width=200)
+    else:
+        st.info(f"📄 Processing document metadata for: {uploaded_file.name}")
     
     # Simple input text boxes so you can enter the real details from your file
     scanned_name = st.text_input("Enter Costume Name:")
@@ -33,6 +34,7 @@ if uploaded_file is not None:
             # Create a dictionary row using the file name and typed information
             new_file_row = {
                 "Costume Name": scanned_name, 
+                "Vendor": scanned_vendor,
                 "Source File": uploaded_file.name, 
                 "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
             }
@@ -68,6 +70,7 @@ if st.button("Add to Closet Table"):
     if manual_name != "":
         new_manual_row = {
             "Costume Name": manual_name, 
+            "Vendor": manual_vendor,
             "Source File": "Manual Entry", 
             "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
         }
@@ -99,8 +102,8 @@ else:
     display_df = pd.DataFrame(st.session_state.closet_list)
     display_df = display_df.set_index("Costume Name")
     
-    # Order the columns nicely
-    column_order = ["Source File", "XS", "S", "M", "L", "XL"]
+    # Order the columns nicely (including your vendor tracking column)
+    column_order = ["Vendor", "Source File", "XS", "S", "M", "L", "XL"]
     display_df = display_df[column_order]
     
     st.table(display_df)
