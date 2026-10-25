@@ -59,9 +59,10 @@ st.markdown("---")
 # --- SECTION 2: MANUAL FORM ---
 st.markdown("### Add Costume Manually")
 
-manual_name = st.text_input("Enter Costume Name Manually:")
-manual_size = st.selectbox("Select Size Manually:", ["XS", "S", "M", "L", "XL"])
-manual_qty = st.number_input("Enter Quantity Manually:", min_value=1, value=1)
+manual_name = st.text_input("Enter Costume Name:")
+manual_vendor = st.text_input("Enter Costume Vendor:")
+manual_size = st.selectbox("Select Size:", ["XS", "S", "M", "L", "XL"])
+manual_qty = st.number_input("Enter Quantity:", min_value=1, value=1)
 
 if st.button("Add to Closet Table"):
     if manual_name != "":
