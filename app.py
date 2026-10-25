@@ -10,7 +10,7 @@ if 'closet_list' not in st.session_state:
     st.session_state.closet_list = []
 
 # --- SECTION 1: UPLOAD ANY IMAGE ---
-st.markdown("### 📷 Automated Scan")
+st.markdown("### Automated Scan")
 
 # Create a file uploader box
 uploaded_file = st.file_uploader("Upload a receipt photo or pdf", type=["pdf", "png", "jpg", "jpeg"])
@@ -22,7 +22,8 @@ if uploaded_file is not None:
     st.image(uploaded_file, caption="Uploaded Document Preview", width=200)
     
     # Simple input text boxes so you can enter the real details from your file
-    scanned_name = st.text_input("Enter Costume Name from File:")
+    scanned_name = st.text_input("Enter Costume Name:")
+    scanned_vendor = st.text_input("Enter Costume Vendor:")
     scanned_size = st.selectbox("Select Costume Size:", ["XS", "S", "M", "L", "XL"])
     scanned_qty = st.number_input("Enter Costume Quantity:", min_value=1, value=1)
 
@@ -56,7 +57,7 @@ if uploaded_file is not None:
 st.markdown("---")
 
 # --- SECTION 2: MANUAL FORM ---
-st.markdown("### 📝 Quick Add Costume Manually")
+st.markdown("### Add Costume Manually")
 
 manual_name = st.text_input("Enter Costume Name Manually:")
 manual_size = st.selectbox("Select Size Manually:", ["XS", "S", "M", "L", "XL"])
@@ -88,7 +89,7 @@ if st.button("Add to Closet Table"):
 st.markdown("---")
 
 # --- SECTION 3: DISPLAY THE TABLE ---
-st.markdown("### 📊 Size Matrix Table Chart")
+st.markdown("### Size Table Chart")
 
 if len(st.session_state.closet_list) == 0:
     st.info("The closet matrix is currently empty. Upload a file or add items manually.")
