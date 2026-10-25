@@ -23,7 +23,7 @@ if uploaded_file is not None:
         # Check if the uploaded file is your mock receipt layout
         if "PRETEND" in uploaded_file.name or "receipt" in uploaded_file.name.lower():
             
-            # --- AUTOMATIC RECIPIENT DATA EXTRACTION IMMERSED IN REAL-TIME ---
+            # --- AUTOMATIC RECIPIENT DATA EXTRACTION ---
             # Item 1 Breakdown: Lovesong Lyrical Dress (1 S, 2 M, 1 L)
             items_to_add = [
                 {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "S", "Qty": 1},
@@ -40,8 +40,10 @@ if uploaded_file is not None:
             for incoming in items_to_add:
                 found = False
                 for item in st.session_state.closet_list:
-                    # FIX: Compare using .lower() so "Lovesong" and "lovesong" combine perfectly!
-                    if item["Costume Name"].lower() == incoming["Name"].lower():
+                    # SMART FIX: Check if one name is inside the other so "Lovesong" and "Lovesong Lyrical Dress" merge!
+                    name1 = item["Costume Name"].lower()
+                    name2 = incoming["Name"].lower()
+                    if (name1 in name2) or (name2 in name1):
                         item[incoming["Size"]] += incoming["Qty"]
                         found = True
                         
@@ -74,10 +76,15 @@ if st.button("Add to Closet Table", key="manual_submit_btn"):
         # --- START SINGLE-ROW MERGING LOGIC ---
         found = False
         
-        # Check if this costume name already exists in our list (Case-Insensitive)
+        # Check if this costume name already exists in our list (Smart Keyword Containment)
         for item in st.session_state.closet_list:
-            if item["Costume Name"].lower() == manual_name.lower():
+            name1 = item["Costume Name"].lower()
+            name2 = manual_name.lower()
+            if (name1 in name2) or (name2 in name1):
                 item[manual_size] += int(manual_qty)
+                # Keep the longer name to look more complete in the table
+                if len(manual_name) > len(item["Costume Name"]):
+                    item["Costume Name"] = manual_name
                 found = True
         
         # If the costume doesn't exist yet, make a brand new clean row
