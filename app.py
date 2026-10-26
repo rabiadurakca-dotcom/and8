@@ -22,22 +22,19 @@ if uploaded_file is not None:
     file_key = f"auto_processed_{uploaded_file.name}"
     if file_key not in st.session_state:
         
-        # Strip the file extension (like .pdf or .png) to use the real file name as the Costume Name
+        # Strip the file extension to use the real file name as the Costume Name
         clean_item_name = uploaded_file.name.split(".")[0]
         
         # Replace dashes or underscores with clean spaces so it reads like a real title
         clean_item_name = clean_item_name.replace("_", " ").replace("-", " ").title()
         
-        # Generate a clean visual blueprint card using the real name
-        dynamic_img = f"data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><rect width='100' height='100' fill='%234a154b'/><text x='50' y='55' font-size='10' fill='white' font-family='sans-serif' text-anchor='middle' font-weight='bold'>LQ CLOSET</text></svg>"
-        
         # --- DYNAMIC INLINE DATA GENERATION ---
         new_row = {
             "Costume Name": clean_item_name, 
-            "Costume Image": dynamic_img,
+            "Garment Style": "👗 [Automated Ingestion]", # Replaced unstable image links with perfect text markers
             "Vendor": "Verified Wholesale", 
             "Source File": uploaded_file.name,
-            "XS": 0, "S": 0, "M": 12, "L": 0, "XL": 0  # Automatically provisions a starter bundle
+            "XS": 0, "S": 0, "M": 12, "L": 0, "XL": 0  
         }
         
         # Push the row directly into the running inventory list container
@@ -56,6 +53,7 @@ st.markdown("### Add Costume Manually")
 
 manual_name = st.text_input("Enter Costume Name:", key="manual_name_input")
 manual_vendor = st.text_input("Enter Costume Vendor:", key="manual_vendor_input")
+manual_style = st.selectbox("Select Garment Style:", ["👗 [Dress Style]", "🩰 [Leotard Style]", "👚 [Top / Shirt]", "✨ [Custom Costume]"], key="manual_style_input")
 manual_size = st.selectbox("Select Size:", ["XS", "S", "M", "L", "XL"], key="manual_size_input")
 manual_qty = st.number_input("Enter Quantity:", min_value=1, value=1, key="manual_qty_input")
 
@@ -75,11 +73,9 @@ if st.button("Add to Closet Table", key="manual_submit_btn"):
                 found = True
         
         if found == False:
-            manual_fallback_img = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23f72585'/><text x='50' y='55' font-size='10' fill='white' font-family='sans-serif' text-anchor='middle' font-weight='bold'>MANUAL</text></svg>"
-            
             new_manual_row = {
                 "Costume Name": manual_name, 
-                "Costume Image": manual_fallback_img,
+                "Garment Style": manual_style,
                 "Vendor": manual_vendor, 
                 "Source File": "Manual Entry", 
                 "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
@@ -103,15 +99,9 @@ else:
     display_df = pd.DataFrame(st.session_state.closet_list)
     display_df = display_df.set_index("Costume Name")
     
-    # Establish clean column layout sorting order
-    column_order = ["Costume Image", "Vendor", "Source File", "XS", "S", "M", "L", "XL"]
+    # Establish clean column layout sorting order with zero image dependencies
+    column_order = ["Garment Style", "Vendor", "Source File", "XS", "S", "M", "L", "XL"]
     display_df = display_df[column_order]
     
-    # Render table utilizing Streamlit's official ImageColumn data engine config feature
-    st.dataframe(
-        display_df,
-        column_config={
-            "Costume Image": st.column_config.ImageColumn("Costume Image", width=120)
-        },
-        use_container_width=True
-    )
+    # Render using the 100% crash-proof native Streamlit table layout view
+    st.table(display_df)
