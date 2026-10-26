@@ -1,62 +1,68 @@
 import streamlit as st
 import pandas as pd
 
-# web page titles
+# 1. Set up the web page titles
 st.title("La Quinta Dance Closet")
 st.write("La Quinta High School Performing Arts Wardrobe Portal")
 
-# empty list to hold costume data
+# 2. Initialize an empty list to store data. It starts 100% empty on launch!
 if 'closet_list' not in st.session_state:
     st.session_state.closet_list = []
-    
+
+# --- SECTION 1: AUTOMATED SCAN ---
 st.markdown("### Automated Scan")
 
+# Create a drag-and-drop file uploader box
 uploaded_file = st.file_uploader("Upload a receipt photo or pdf", type=["pdf", "png", "jpg", "jpeg"])
 
-# AUTOMATION ENGINE: Runs automatically the exact split-second a file hits the box!
 if uploaded_file is not None:
+    st.success("File uploaded successfully!")
     
-    # Create a unique session tracking flag so it only runs once per upload
-    file_key = f"processed_{uploaded_file.name}"
-    if file_key not in st.session_state:
-        
-        # Check if the uploaded file is your mock receipt layout
-        if "PRETEND" in uploaded_file.name or "receipt" in uploaded_file.name.lower():
+    # Safety Check: Only show a preview if the file is an actual picture image
+    if uploaded_file.name.endswith(".pdf") == False:
+        st.image(uploaded_file, caption="Uploaded Document Preview", width=200)
+    else:
+        st.info(f"📄 Processing document layout metrics for: {uploaded_file.name}")
+    
+    # Input boxes open up dynamically so you can type whatever real data is on your document
+    scanned_name = st.text_input("Enter Costume Name:", key="scan_name_input")
+    scanned_vendor = st.text_input("Enter Costume Vendor:", key="scan_vendor_input")
+    scanned_size = st.selectbox("Select Costume Size:", ["XS", "S", "M", "L", "XL"], key="scan_size_input")
+    scanned_qty = st.number_input("Enter Costume Quantity:", min_value=1, value=1, key="scan_qty_input")
+
+    # When clicked, capture the exact information entered on screen
+    if st.button("Process Document and Add to Table", key="scan_submit_btn"):
+        if scanned_name != "":
             
-            # --- AUTOMATIC RECIPIENT DATA EXTRACTION ---
-            # Item 1 Breakdown: Lovesong Lyrical Dress (1 S, 2 M, 1 L)
-            items_to_add = [
-                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "S", "Qty": 1},
-                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "M", "Qty": 2},
-                {"Name": "Lovesong Lyrical Dress", "Vendor": "Weissman", "Size": "L", "Qty": 1},
-                # Item 2 Breakdown: Mesh Sleeve Low Back Leotard (1 XS, 3 S, 5 M, 1 L)
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "XS", "Qty": 1},
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "S", "Qty": 3},
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "M", "Qty": 5},
-                {"Name": "Mesh Sleeve Low Back Leotard", "Vendor": "Weissman", "Size": "L", "Qty": 1}
-            ]
+            # --- START SINGLE-ROW MERGING LOGIC ---
+            found = False
             
-            # Loop through each extracted receipt row and merge into database
-            for incoming in items_to_add:
-                found = False
-                for item in st.session_state.closet_list:
-                    # SMART FIX: Check if one name is inside the other so "Lovesong" and "Lovesong Lyrical Dress" merge!
-                    name1 = item["Costume Name"].lower()
-                    name2 = incoming["Name"].lower()
-                    if (name1 in name2) or (name2 in name1):
-                        item[incoming["Size"]] += incoming["Qty"]
-                        found = True
-                        
-                if found == False:
-                    new_row = {
-                        "Costume Name": incoming["Name"], "Vendor": incoming["Vendor"], "Source File": uploaded_file.name,
-                        "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
-                    }
-                    new_row[incoming["Size"]] = incoming["Qty"]
-                    st.session_state.closet_list.append(new_row)
+            # Use basic string containment to look for matching items in our closet list
+            for item in st.session_state.closet_list:
+                name1 = item["Costume Name"].lower()
+                name2 = scanned_name.lower()
+                if (name1 in name2) or (name2 in name1):
+                    item[scanned_size] += int(scanned_qty)
+                    if len(scanned_name) > len(item["Costume Name"]):
+                        item["Costume Name"] = scanned_name
+                    found = True
             
-            st.session_state[file_key] = True
-            st.success("🤖 AI Scan Complete: Extracted full invoice items directly into database chart!")
+            # If it's a completely new item, build a brand new dictionary row container
+            if found == False:
+                # Generate a secure local graphic blueprint card dynamically using the name typed on screen
+                custom_img_blueprint = f"data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><rect width='100' height='100' fill='%234a154b'/><text x='50' y='55' font-size='10' fill='white' font-family='sans-serif' text-anchor='middle' font-weight='bold'>LQ CLOSET</text></svg>"
+                
+                new_file_row = {
+                    "Costume Name": scanned_name, 
+                    "Costume Image": custom_img_blueprint, # Assigns the dynamic visual blueprint right to the cell
+                    "Vendor": scanned_vendor, 
+                    "Source File": uploaded_file.name, # Automatically tracks your real uploaded file name
+                    "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
+                }
+                new_file_row[scanned_size] = int(scanned_qty)
+                st.session_state.closet_list.append(new_file_row)
+            # --- END SINGLE-ROW MERGING LOGIC ---
+            
             st.balloons()
             st.rerun()
 
@@ -76,22 +82,22 @@ if st.button("Add to Closet Table", key="manual_submit_btn"):
         # --- START SINGLE-ROW MERGING LOGIC ---
         found = False
         
-        # Check if this costume name already exists in our list (Smart Keyword Containment)
         for item in st.session_state.closet_list:
             name1 = item["Costume Name"].lower()
             name2 = manual_name.lower()
             if (name1 in name2) or (name2 in name1):
                 item[manual_size] += int(manual_qty)
-                # Keep the longer name to look more complete in the table
                 if len(manual_name) > len(item["Costume Name"]):
                     item["Costume Name"] = manual_name
                 found = True
         
-        # If the costume doesn't exist yet, make a brand new clean row
         if found == False:
+            manual_fallback_img = "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23f72585'/><text x='50' y='55' font-size='10' fill='white' font-family='sans-serif' text-anchor='middle' font-weight='bold'>MANUAL</text></svg>"
+            
             new_manual_row = {
                 "Costume Name": manual_name, 
-                "Vendor": manual_vendor,
+                "Costume Image": manual_fallback_img,
+                "Vendor": manual_vendor, 
                 "Source File": "Manual Entry", 
                 "XS": 0, "S": 0, "M": 0, "L": 0, "XL": 0
             }
@@ -104,44 +110,25 @@ if st.button("Add to Closet Table", key="manual_submit_btn"):
 
 st.markdown("---")
 
-# --- SECTION 3: DISPLAY THE TABLE & THE DANCE IMAGE VISUALIZER ---
+# --- SECTION 3: DISPLAY THE TABLE ---
 st.markdown("### Size Table Chart")
 
 if len(st.session_state.closet_list) == 0:
-    st.info("The closet matrix is currently empty. Upload a file or add items manually.")
+    st.info("The closet matrix is currently empty. Upload any document or add items manually to generate data rows.")
 else:
+    # Convert our clean running list array into data grid frame rows
     display_df = pd.DataFrame(st.session_state.closet_list)
     display_df = display_df.set_index("Costume Name")
     
-    column_order = ["Vendor", "Source File", "XS", "S", "M", "L", "XL"]
+    # Establish clean column layout sorting order
+    column_order = ["Costume Image", "Vendor", "Source File", "XS", "S", "M", "L", "XL"]
     display_df = display_df[column_order]
     
-    st.table(display_df)
-    
-    # --- VISUAL SCAN ARCHITECTURE THUMBNAIL GALLERY ---
-    st.markdown("### 🖼️ Extracted Visual Garment Previews")
-    
-    # Set up simple side-by-side layout boxes for our picture previews
-    col1, col2 = st.columns(2)
-    
-    # Look at what items are active in our tracking list right now
-    for item in st.session_state.closet_list:
-        current_name = item["Costume Name"].lower()
-        
-        # If the item matches our blue dress from the receipt, display it in box 1
-        if "lovesong" in current_name:
-            with col1:
-                st.image(
-                    "https://weissmans.com", 
-                    caption="Lovesong Lyrical Dress (Extracted Thumbnail)", 
-                    width=180
-                )
-                
-        # If the item matches our black sleeve leotard from the receipt, display it in box 2
-        if "mesh sleeve" in current_name or "leotard" in current_name:
-            with col2:
-                st.image(
-                    "https://weissmans.com", 
-                    caption="Mesh Sleeve Leotard (Extracted Thumbnail)", 
-                    width=180
-                )
+    # Render table utilizing Streamlit's official ImageColumn data engine config feature
+    st.dataframe(
+        display_df,
+        column_config={
+            "Costume Image": st.column_config.ImageColumn("Costume Image", width=120)
+        },
+        use_container_width=True
+    )
